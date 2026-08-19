@@ -3,7 +3,6 @@ package com.heypixel.heypixelmod.obsoverlay.modules.impl.combat;
 import com.heypixel.heypixelmod.obsoverlay.Naven;
 import com.heypixel.heypixelmod.obsoverlay.events.api.EventTarget;
 import com.heypixel.heypixelmod.obsoverlay.events.api.types.EventType;
-import com.heypixel.heypixelmod.obsoverlay.events.impl.EventAttackSlowdown;
 import com.heypixel.heypixelmod.obsoverlay.events.impl.EventClick;
 import com.heypixel.heypixelmod.obsoverlay.events.impl.EventRender;
 import com.heypixel.heypixelmod.obsoverlay.events.impl.EventRender2D;
@@ -239,13 +238,8 @@ public class Aura extends Module {
       this.toggle();
    }
 
-   @EventTarget
-   public void onAttackSlowdown(EventAttackSlowdown e) {
-      e.setCancelled(true);
-   }
-
-   @EventTarget
-   public void onMotion(EventRunTicks event) {
+    @EventTarget
+    public void onMotion(EventRunTicks event) {
       if (event.getType() == EventType.PRE && mc.player != null) {
          if (mc.screen instanceof AbstractContainerScreen
             || Naven.getInstance().getModuleManager().getModule(Stuck.class).isEnabled()
