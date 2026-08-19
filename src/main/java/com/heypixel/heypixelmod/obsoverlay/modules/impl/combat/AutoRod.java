@@ -12,7 +12,6 @@ import com.heypixel.heypixelmod.obsoverlay.utils.rotation.RotationUtils;
 import com.heypixel.heypixelmod.obsoverlay.values.ValueBuilder;
 import com.heypixel.heypixelmod.obsoverlay.values.impl.BooleanValue;
 import com.heypixel.heypixelmod.obsoverlay.values.impl.FloatValue;
-import com.heypixel.heypixelmod.obsoverlay.values.impl.IntValue;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -40,13 +39,13 @@ public class AutoRod extends Module {
       .build()
       .getFloatValue();
 
-   private final IntValue cooldown = ValueBuilder.create(this, "Cooldown")
-      .setDefaultIntValue(6)
-      .setIntStep(1)
-      .setMinIntValue(1)
-      .setMaxIntValue(50)
+   private final FloatValue cooldown = ValueBuilder.create(this, "Cooldown")
+      .setDefaultFloatValue(6.0F)
+      .setFloatStep(1.0F)
+      .setMinFloatValue(1.0F)
+      .setMaxFloatValue(50.0F)
       .build()
-      .getIntValue();
+      .getFloatValue();
 
    private final BooleanValue autoRotate = ValueBuilder.create(this, "AutoRotate")
       .setDefaultBooleanValue(true)
@@ -162,7 +161,7 @@ public class AutoRod extends Module {
       mc.player.getInventory().selected = slot;
       mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND);
 
-      cooldownTimer = cooldown.getCurrentValue();
+         cooldownTimer = (int) cooldown.getCurrentValue();
       waitingForPull = false;
       pullTicks = 0;
       currentBobber = null;
