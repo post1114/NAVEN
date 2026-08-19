@@ -3,9 +3,7 @@ package com.heypixel.heypixelmod.obsoverlay.ui;
 import com.heypixel.heypixelmod.obsoverlay.Naven;
 import com.heypixel.heypixelmod.obsoverlay.utils.RenderUtils;
 import com.heypixel.heypixelmod.obsoverlay.utils.VerifyManager;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import java.awt.Color;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
@@ -30,19 +28,14 @@ public class LoginScreen extends Screen {
 
    private static final int CARD_WIDTH = 320;
    private static final int CARD_HEIGHT = 300;
-   private static final int CARD_RADIUS = 12;
    private static final int INPUT_HEIGHT = 36;
-   private static final int INPUT_RADIUS = 6;
    private static final int BTN_HEIGHT = 38;
-   private static final int BTN_RADIUS = 6;
 
    private EditBox usernameInput;
    private EditBox passwordInput;
    private String statusMessage = "";
    private int statusColor = TEXT_SECONDARY;
    private boolean verifying = false;
-   private int animTick = 0;
-   private float fadeAlpha = 0.0F;
    private boolean showSuccess = false;
    private int successTimer = 0;
 
@@ -77,52 +70,46 @@ public class LoginScreen extends Screen {
 
    public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
       PoseStack stack = g.pose();
-      this.animTick++;
-      this.fadeAlpha = Math.min(1.0F, this.fadeAlpha + 0.05F);
-
-      RenderSystem.enableBlend();
-      RenderSystem.defaultBlendFunc();
 
       g.fill(0, 0, this.width, this.height, BG_COLOR);
 
       int cardX = (this.width - CARD_WIDTH) / 2;
       int cardY = (this.height - CARD_HEIGHT) / 2;
-
-      RenderUtils.drawRoundedRect(stack, cardX, cardY, CARD_WIDTH, CARD_HEIGHT, CARD_RADIUS, CARD_COLOR);
-      drawBorder(stack, cardX, cardY, CARD_WIDTH, CARD_HEIGHT, CARD_RADIUS, CARD_BORDER);
-
-      RenderUtils.drawRoundedRect(stack, cardX + CARD_WIDTH / 2 - 20, cardY + 25, 40, 4, 2, ACCENT);
-
-      String title = "Naven";
-      int titleWidth = this.font.width(title);
-      this.font.draw(stack, title,
-         (float)(this.width / 2 - titleWidth / 2),
-         (float)(cardY + 42), TEXT_PRIMARY);
-
-      String subtitle = "Sign in to continue";
-      int subtitleWidth = this.font.width(subtitle);
-      this.font.draw(stack, subtitle,
-         (float)(this.width / 2 - subtitleWidth / 2),
-         (float)(cardY + 58), TEXT_SECONDARY);
-
       int inputX = cardX + 30;
       int inputWidth = CARD_WIDTH - 60;
 
-      this.font.draw(stack, "Username", (float)inputX, (float)(cardY + 82), TEXT_SECONDARY);
+      RenderUtils.drawRoundedRect(stack, cardX, cardY, CARD_WIDTH, CARD_HEIGHT, 12, CARD_BORDER);
+      RenderUtils.drawRoundedRect(stack, cardX + 1, cardY + 1, CARD_WIDTH - 2, CARD_HEIGHT - 2, 11, CARD_COLOR);
+
+      RenderUtils.drawRoundedRect(stack, cardX + CARD_WIDTH / 2 - 20, cardY + 25, 40, 4, 2, ACCENT);
+
+      g.drawString(this.font, "Naven",
+         this.width / 2 - this.font.width("Naven") / 2,
+         cardY + 42, TEXT_PRIMARY, false);
+
+      g.drawString(this.font, "Sign in to continue",
+         this.width / 2 - this.font.width("Sign in to continue") / 2,
+         cardY + 58, TEXT_SECONDARY, false);
+
+      g.drawString(this.font, "Username", inputX, cardY + 82, TEXT_SECONDARY, false);
       if (this.usernameInput != null) {
-         boolean focusU = this.usernameInput.isFocused();
-         RenderUtils.drawRoundedRect(stack, inputX, cardY + 95, inputWidth, INPUT_HEIGHT, INPUT_RADIUS, INPUT_BG);
-         drawBorder(stack, inputX, cardY + 95, inputWidth, INPUT_HEIGHT, INPUT_RADIUS,
-            focusU ? INPUT_BORDER_FOCUS : INPUT_BORDER);
+         RenderUtils.drawRoundedRect(stack, inputX, cardY + 95, inputWidth, INPUT_HEIGHT, 6, INPUT_BG);
+         int border = this.usernameInput.isFocused() ? INPUT_BORDER_FOCUS : INPUT_BORDER;
+         g.fill(inputX, cardY + 95, inputX + inputWidth, cardY + 96, border);
+         g.fill(inputX, cardY + 95 + INPUT_HEIGHT - 1, inputX + inputWidth, cardY + 95 + INPUT_HEIGHT, border);
+         g.fill(inputX, cardY + 95, inputX + 1, cardY + 95 + INPUT_HEIGHT, border);
+         g.fill(inputX + inputWidth - 1, cardY + 95, inputX + inputWidth, cardY + 95 + INPUT_HEIGHT, border);
          this.usernameInput.render(g, mouseX, mouseY, partialTick);
       }
 
-      this.font.draw(stack, "Password", (float)inputX, (float)(cardY + 132), TEXT_SECONDARY);
+      g.drawString(this.font, "Password", inputX, cardY + 132, TEXT_SECONDARY, false);
       if (this.passwordInput != null) {
-         boolean focusP = this.passwordInput.isFocused();
-         RenderUtils.drawRoundedRect(stack, inputX, cardY + 145, inputWidth, INPUT_HEIGHT, INPUT_RADIUS, INPUT_BG);
-         drawBorder(stack, inputX, cardY + 145, inputWidth, INPUT_HEIGHT, INPUT_RADIUS,
-            focusP ? INPUT_BORDER_FOCUS : INPUT_BORDER);
+         RenderUtils.drawRoundedRect(stack, inputX, cardY + 145, inputWidth, INPUT_HEIGHT, 6, INPUT_BG);
+         int border = this.passwordInput.isFocused() ? INPUT_BORDER_FOCUS : INPUT_BORDER;
+         g.fill(inputX, cardY + 145, inputX + inputWidth, cardY + 146, border);
+         g.fill(inputX, cardY + 145 + INPUT_HEIGHT - 1, inputX + inputWidth, cardY + 145 + INPUT_HEIGHT, border);
+         g.fill(inputX, cardY + 145, inputX + 1, cardY + 145 + INPUT_HEIGHT, border);
+         g.fill(inputX + inputWidth - 1, cardY + 145, inputX + inputWidth, cardY + 145 + INPUT_HEIGHT, border);
          this.passwordInput.render(g, mouseX, mouseY, partialTick);
       }
 
@@ -141,26 +128,23 @@ public class LoginScreen extends Screen {
          btnBg = hoveringBtn ? ACCENT_HOVER : ACCENT;
       }
 
-      RenderUtils.drawRoundedRect(stack, btnX, btnY, btnWidth, BTN_HEIGHT, BTN_RADIUS, btnBg);
+      RenderUtils.drawRoundedRect(stack, btnX, btnY, btnWidth, BTN_HEIGHT, 6, btnBg);
 
       String btnText = this.showSuccess ? "Welcome!" : (this.verifying ? "Signing in..." : "Sign In");
-      int btnTextWidth = this.font.width(btnText);
-      this.font.draw(stack, btnText,
-         (float)(this.width / 2 - btnTextWidth / 2),
-         (float)(btnY + 12), TEXT_PRIMARY);
+      g.drawString(this.font, btnText,
+         this.width / 2 - this.font.width(btnText) / 2,
+         btnY + 12, TEXT_PRIMARY, false);
 
       if (!this.statusMessage.isEmpty()) {
-         int statusWidth = this.font.width(this.statusMessage);
-         this.font.draw(stack, this.statusMessage,
-            (float)(this.width / 2 - statusWidth / 2),
-            (float)(cardY + 250), this.statusColor);
+         g.drawString(this.font, this.statusMessage,
+            this.width / 2 - this.font.width(this.statusMessage) / 2,
+            cardY + 250, this.statusColor, false);
       }
 
       String version = "Naven v" + Naven.CLIENT_NAME;
-      int versionWidth = this.font.width(version);
-      this.font.draw(stack, version,
-         (float)(this.width / 2 - versionWidth / 2),
-         (float)(cardY + CARD_HEIGHT + 10), 0xFF484F58);
+      g.drawString(this.font, version,
+         this.width / 2 - this.font.width(version) / 2,
+         cardY + CARD_HEIGHT + 10, 0xFF484F58, false);
 
       if (this.showSuccess) {
          this.successTimer++;
@@ -168,42 +152,6 @@ public class LoginScreen extends Screen {
             Minecraft.getInstance().setScreen(null);
          }
       }
-
-      RenderSystem.disableBlend();
-   }
-
-   private void drawBorder(PoseStack stack, float x, float y, float w, float h, float r, int color) {
-      float a = (float)(color >> 24 & 0xFF) / 255.0F;
-      if (a <= 0.0F) return;
-      float red = (float)(color >> 16 & 0xFF) / 255.0F;
-      float green = (float)(color >> 8 & 0xFF) / 255.0F;
-      float blue = (float)(color & 0xFF) / 255.0F;
-      RenderSystem.setShaderColor(red, green, blue, a);
-      RenderSystem.enableBlend();
-      RenderSystem.defaultBlendFunc();
-      net.minecraft.client.renderer.GameRenderer.getPositionShader();
-      com.mojang.blaze3d.vertex.Tesselator tesselator = com.mojang.blaze3d.vertex.Tesselator.getInstance();
-      com.mojang.blaze3d.vertex.BufferBuilder bb = tesselator.getBuilder();
-      bb.begin(com.mojang.blaze3d.vertex.VertexFormat.Mode.DEBUG_STRIP, com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION);
-      float segments = 16;
-      for (int i = 0; i <= segments; i++) {
-         float angle = (float)i / segments * 6.2831855F;
-         bb.vertex(stack.last().pose(), x + r + (float)Math.cos(angle) * r, y + r + (float)Math.sin(angle) * r, 0).endVertex();
-      }
-      for (int i = 0; i <= segments; i++) {
-         float angle = (float)i / segments * 6.2831855F;
-         bb.vertex(stack.last().pose(), x + w - r + (float)Math.cos(angle) * r, y + r + (float)Math.sin(angle) * r, 0).endVertex();
-      }
-      for (int i = 0; i <= segments; i++) {
-         float angle = (float)i / segments * 6.2831855F;
-         bb.vertex(stack.last().pose(), x + r + (float)Math.cos(angle) * r, y + h - r + (float)Math.sin(angle) * r, 0).endVertex();
-      }
-      for (int i = 0; i <= segments; i++) {
-         float angle = (float)i / segments * 6.2831855F;
-         bb.vertex(stack.last().pose(), x + w - r + (float)Math.cos(angle) * r, y + h - r + (float)Math.sin(angle) * r, 0).endVertex();
-      }
-      tesselator.end();
-      RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
    }
 
    public boolean mouseClicked(double mouseX, double mouseY, int button) {
@@ -269,7 +217,7 @@ public class LoginScreen extends Screen {
 
    public void onClose() {
       if (!Naven.verified) {
-         Minecraft.getInstance().stop(Minecraft.getInstance().isLocalServer());
+         Minecraft.getInstance().stop();
       }
    }
 }
