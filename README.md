@@ -97,31 +97,36 @@ public static final String VERIFY_SERVER = "http://localhost:8080/verify"; // �
 4. 客户端收到 Token 后完成验证，自动进入游戏
 5. 验证失败显示错误信息，关闭客户端时自动退出
 
-#### 验证服务器部署
-仓库附带 Python 验证服务器脚本 `verify_server.py`（无额外依赖）：
+#### 验证服务器
+仓库附带 `verify_server.py`，提供 GUI 管理界面 + REST API（无额外依赖）。
+
 ```bash
-python verify_server.py --port 8080 --user "admin" --pass "secret" --token "your_token"
+python verify_server.py --port 8080          # 带 GUI 启动
+python verify_server.py --port 8080 --no-gui # 无头模式
 ```
 
-也可通过环境变量配置：
-```bash
-export NVERIFY_PORT=8080
-export NVERIFY_USER=admin
-export NVERIFY_PASS=secret
-export NVERIFY_TOKEN=your_token
-python verify_server.py
-```
+##### GUI 界面
+Fluent Design 风格深色主题，包含：
+- **用户管理**：添加、编辑、删除用户，设置有效天数，搜索过滤
+- **API 文档**：内置接口说明
 
-#### API 接口
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| POST | `/verify` | 发送 `{"username":"...","password":"..."}` ，成功返回 Token |
-| GET  | `/health` | 健康检查，返回 `{"status":"ok"}` |
+用户数据存储在 `users.json` 中。
 
-#### 防破解说明
+##### REST API
+| 方法 | 路径 | 说明 | 请求体 | 响应 |
+|------|------|------|--------|------|
+| POST | `/verify` | 验证登录 | `{"username","password"}` | Token 字符串 |
+| GET | `/api/users` | 获取用户列表 | — | `[{username,token,created,expires,active}]` |
+| POST | `/api/users` | 创建用户 | `{"username","password","days":30}` | `{token,expires}` |
+| PUT | `/api/users` | 更新用户 | `{"username","password?","days?"}` | `{token,expires}` |
+| DELETE | `/api/users` | 删除用户 | `{"username"}` | `{ok:true}` |
+| GET | `/health` | 健康检查 | — | `{status:"ok"}` |
+
+##### 防破解说明
 - 用户名/密码通过服务端验证，客户端不存储凭据
 - 验证成功后返回 Token，后续操作可携带 Token
-- 用户名通过 SHA-256 哈希后记录日志，不暴露原始信息
+- 密码通过 SHA-256 哈希存储，不暴露明文
+- 用户有效期可配置，到期自动失效
 - 关闭验证 (`VERIFY_ENABLED = false`) 时客户端直接进入游戏
 
 ### 快捷键
