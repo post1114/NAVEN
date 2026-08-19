@@ -12,12 +12,14 @@ public class VerifyManager {
       .connectTimeout(Duration.ofSeconds(5))
       .build();
 
-   public static void verify(String token) {
+   public static void verify(String username, String password) {
       Naven.verifyStatus = "Verifying...";
       Naven.verified = false;
+      Naven.verifyToken = "";
 
       try {
-         String requestBody = "{\"token\":\"" + escapeJson(token) + "\"}";
+         String requestBody = "{\"username\":\"" + escapeJson(username)
+            + "\",\"password\":\"" + escapeJson(password) + "\"}";
          HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(Naven.VERIFY_SERVER))
             .header("Content-Type", "application/json")
@@ -26,15 +28,22 @@ public class VerifyManager {
             .build();
 
          client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-            .thenApply(HttpResponse::body)
-            .thenAccept(body -> {
-               String trimmed = body.trim();
-               if (trimmed.equals(Naven.VERIFY_UUID)) {
+            .thenApply(response -> {
+               int code = response.statusCode();
+               String body = response.body().trim();
+               return new VerifyResult(code, body);
+            })
+            .thenAccept(result -> {
+               if (result.code == 200 && !result.body.isEmpty()) {
                   Naven.verified = true;
+                  Naven.verifyToken = result.body;
                   Naven.verifyStatus = "Verified!";
+               } else if (result.code == 401 || result.code == 403) {
+                  Naven.verified = false;
+                  Naven.verifyStatus = "Invalid credentials";
                } else {
                   Naven.verified = false;
-                  Naven.verifyStatus = "Invalid response";
+                  Naven.verifyStatus = "Server error (" + result.code + ")";
                }
             })
             .exceptionally(ex -> {
@@ -49,20 +58,17 @@ public class VerifyManager {
       }
    }
 
-   public static void verifyLocal(String token) {
-      Naven.verifyStatus = "Verifying...";
-      Naven.verified = false;
-
-      if (token != null && token.equals(Naven.VERIFY_UUID)) {
-         Naven.verified = true;
-         Naven.verifyStatus = "Verified!";
-      } else {
-         Naven.verified = false;
-         Naven.verifyStatus = "Invalid token";
-      }
-   }
-
    private static String escapeJson(String s) {
       return s.replace("\\", "\\\\").replace("\"", "\\\"");
+   }
+
+   private static class VerifyResult {
+      final int code;
+      final String body;
+
+      VerifyResult(int code, String body) {
+         this.code = code;
+         this.body = body;
+      }
    }
 }

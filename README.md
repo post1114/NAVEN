@@ -81,42 +81,47 @@ cd Naven-Modern
 - `friends.json` - 好友列表
 
 ### 验证系统
-客户端内置 Token 验证系统，用于防止未授权使用。
+客户端内置用户名/密码验证系统，Fluent Design 风格登录界面，用于防止未授权使用。
 
 #### 配置方式
 在 `Naven.java` 中修改以下常量：
 ```java
 public static final boolean VERIFY_ENABLED = false;   // 是否开启验证（默认关闭）
 public static final String VERIFY_SERVER = "http://localhost:8080/verify"; // 验证服务器地址
-public static final String VERIFY_UUID = "enter_your_uuid"; // 预期的验证响应字符串
 ```
 
 #### 工作流程
-1. 开启验证后 (`VERIFY_ENABLED = true`)，客户端启动时会显示登录界面
-2. 客户端将用户输入的 Token 发送到验证服务器
-3. 服务器校验 Token，返回预设的 UUID 字符串
-4. 客户端收到正确的 UUID 后完成验证，进入游戏
-5. 验证失败则显示错误信息，关闭客户端
+1. 开启验证后 (`VERIFY_ENABLED = true`)，客户端启动时显示 Fluent Design 风格登录界面
+2. 用户输入用户名和密码，客户端发送至验证服务器
+3. 服务器校验凭据，验证成功返回 Token
+4. 客户端收到 Token 后完成验证，自动进入游戏
+5. 验证失败显示错误信息，关闭客户端时自动退出
 
 #### 验证服务器部署
-仓库附带 Python 验证服务器脚本 `verify_server.py`：
+仓库附带 Python 验证服务器脚本 `verify_server.py`（无额外依赖）：
 ```bash
-# 安装依赖（无额外依赖，使用标准库）
-python verify_server.py --port 8080 --token "your_secret_token" --uuid "enter_your_uuid"
+python verify_server.py --port 8080 --user "admin" --pass "secret" --token "your_token"
 ```
 
 也可通过环境变量配置：
 ```bash
 export NVERIFY_PORT=8080
-export NVERIFY_TOKEN=your_secret_token
-export NVERIFY_UUID=enter_your_uuid
+export NVERIFY_USER=admin
+export NVERIFY_PASS=secret
+export NVERIFY_TOKEN=your_token
 python verify_server.py
 ```
 
+#### API 接口
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/verify` | 发送 `{"username":"...","password":"..."}` ，成功返回 Token |
+| GET  | `/health` | 健康检查，返回 `{"status":"ok"}` |
+
 #### 防破解说明
-- 验证逻辑在客户端和服务端双向执行，服务端返回动态 UUID
-- Token 通过 SHA-256 哈希后记录日志，不暴露原始 Token
-- 默认 UUID 为 `enter_your_uuid`，部署时应替换为自定义值
+- 用户名/密码通过服务端验证，客户端不存储凭据
+- 验证成功后返回 Token，后续操作可携带 Token
+- 用户名通过 SHA-256 哈希后记录日志，不暴露原始信息
 - 关闭验证 (`VERIFY_ENABLED = false`) 时客户端直接进入游戏
 
 ### 快捷键

@@ -33,8 +33,8 @@ public class Naven {
    public static final String CLIENT_DISPLAY_NAME = "Naven";
    public static final boolean VERIFY_ENABLED = false;
    public static final String VERIFY_SERVER = "http://localhost:8080/verify";
-   public static final String VERIFY_UUID = "enter_your_uuid";
    public static volatile boolean verified = false;
+   public static volatile String verifyToken = "";
    public static volatile String verifyStatus = "";
    private static Naven instance;
    private final EventManager eventManager;
