@@ -81,7 +81,9 @@ cd Naven-Modern
 - `friends.json` - 好友列表
 
 ### 验证系统
-客户端内置多阶段加密验证系统，Fluent Design 风格登录界面，用于防止未授权使用。
+客户端内置多阶段加密验证系统，供自定义使用，~~Fluent Design 风格登录界面~~(TODO)
+Python版服务器实现上传在存储库根目录的verify_server.py
+服务器和有UUID功能，这实现了每个服务器是唯一的
 
 #### 验证流程
 1. 客户端请求服务器 `/health`，获取 AES 加密的身份验证字符串
@@ -102,7 +104,7 @@ cd Naven-Modern
 ```java
 public static final boolean VERIFY_ENABLED = false;   // 是否开启验证
 public static final String VERIFY_SERVER = "http://localhost:8080"; // 服务器地址
-public static final String VERIFY_IDENTITY = "Naven-Client-2024-Secure"; // 身份验证字符串
+public static final String VERIFY_IDENTITY = "Naven-Client-2024-Secure"; // 服务器唯一身份验证字符串
 ```
 
 #### 验证服务器
