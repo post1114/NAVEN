@@ -135,8 +135,9 @@ public class ModuleManager {
           new NoSlow(),
           new LongJump(),
           new TickBase(),
-          new Criticals(),
-          new DoubleHit()
+           new Criticals(),
+           new DoubleHit(),
+           new AutoRod()
       );
    }
 
