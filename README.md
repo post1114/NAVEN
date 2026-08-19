@@ -81,53 +81,52 @@ cd Naven-Modern
 - `friends.json` - 好友列表
 
 ### 验证系统
-客户端内置用户名/密码验证系统，Fluent Design 风格登录界面，用于防止未授权使用。
+客户端内置多阶段加密验证系统，Fluent Design 风格登录界面，用于防止未授权使用。
+
+#### 验证流程
+1. 客户端请求服务器 `/health`，获取 AES 加密的身份验证字符串
+2. 客户端解密并与本地硬编码字符串比对，不一致则禁止登录
+3. 身份验证通过后，玩家输入用户名和密码
+4. 客户端用 AES 加密 `username\npassword`，发送到 `/login`
+5. 服务器解密后验证账号密码及有效时长
+6. 验证成功返回 AES 加密的 Token，客户端解密存储
+7. 验证完成，客户端放行进入游戏
+
+#### 加密说明
+- 算法：AES-128 / ECB / PKCS5Padding
+- 密钥：16 字节硬编码（客户端/服务器一致）
+- 身份字符串和登录凭据均加密传输，无法通过网络抓包直接查看
 
 #### 配置方式
-在 `Naven.java` 中修改以下常量：
+在 `Naven.java` 中修改：
 ```java
-public static final boolean VERIFY_ENABLED = false;   // 是否开启验证（默认关闭）
-public static final String VERIFY_SERVER = "http://localhost:8080/verify"; // 验证服务器地址
+public static final boolean VERIFY_ENABLED = false;   // 是否开启验证
+public static final String VERIFY_SERVER = "http://localhost:8080"; // 服务器地址
+public static final String VERIFY_IDENTITY = "Naven-Client-2024-Secure"; // 身份验证字符串
 ```
 
-#### 工作流程
-1. 开启验证后 (`VERIFY_ENABLED = true`)，客户端启动时显示 Fluent Design 风格登录界面
-2. 用户输入用户名和密码，客户端发送至验证服务器
-3. 服务器校验凭据，验证成功返回 Token
-4. 客户端收到 Token 后完成验证，自动进入游戏
-5. 验证失败显示错误信息，关闭客户端时自动退出
-
 #### 验证服务器
-仓库附带 `verify_server.py`，提供 GUI 管理界面 + REST API（无额外依赖）。
-
 ```bash
-python verify_server.py --port 8080          # 带 GUI 启动
+pip install pycryptodome
+python verify_server.py --port 8080          # 带 GUI
 python verify_server.py --port 8080 --no-gui # 无头模式
 ```
 
-##### GUI 界面
-Fluent Design 风格深色主题，包含：
-- **用户管理**：添加、编辑、删除用户，设置有效天数，搜索过滤
-- **API 文档**：内置接口说明
+服务器身份验证字符串在 `verify_server.py` 中配置：
+```python
+SERVER_IDENTITY = "Naven-Server-2024-Secure"  # 必须与客户端 VERIFY_IDENTITY 一致
+AES_KEY = b"NavenSecure2024!"                 # AES 密钥（16字节）
+```
 
-用户数据存储在 `users.json` 中。
-
-##### REST API
+##### API 接口
 | 方法 | 路径 | 说明 | 请求体 | 响应 |
 |------|------|------|--------|------|
-| POST | `/verify` | 验证登录 | `{"username","password"}` | Token 字符串 |
-| GET | `/api/users` | 获取用户列表 | — | `[{username,token,created,expires,active}]` |
-| POST | `/api/users` | 创建用户 | `{"username","password","days":30}` | `{token,expires}` |
-| PUT | `/api/users` | 更新用户 | `{"username","password?","days?"}` | `{token,expires}` |
-| DELETE | `/api/users` | 删除用户 | `{"username"}` | `{ok:true}` |
-| GET | `/health` | 健康检查 | — | `{status:"ok"}` |
-
-##### 防破解说明
-- 用户名/密码通过服务端验证，客户端不存储凭据
-- 验证成功后返回 Token，后续操作可携带 Token
-- 密码通过 SHA-256 哈希存储，不暴露明文
-- 用户有效期可配置，到期自动失效
-- 关闭验证 (`VERIFY_ENABLED = false`) 时客户端直接进入游戏
+| GET | `/health` | 获取加密身份字符串 | — | `{status, identity(加密)}` |
+| POST | `/login` | 加密登录验证 | `{data(加密)}` | `{token(加密)}` |
+| GET | `/api/users` | 用户列表 | — | `[{username,token,created,expires,active}]` |
+| POST | `/api/users` | 创建用户 | `{username,password,days}` | `{token,expires}` |
+| PUT | `/api/users` | 更新用户 | `{username,password?,days?}` | `{token,expires}` |
+| DELETE | `/api/users` | 删除用户 | `{username}` | `{ok:true}` |
 
 ### 快捷键
 - **ClickGUI**: `右Shift` (默认)

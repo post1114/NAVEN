@@ -4,15 +4,18 @@ Naven-Modern Verification Server
 Fluent Design GUI + REST API for managing user verification.
 
 Usage:
+    pip install pycryptodome
     python verify_server.py [--port PORT] [--no-gui]
 
 API Endpoints:
-    POST   /verify          {username, password} -> token
-    GET    /api/users       -> [{username, token, created, expires, active}]
-    POST   /api/users       {username, password, days} -> {token, expires}
-    PUT    /api/users       {username, password?, days?} -> {token, expires}
-    DELETE /api/users       {username} -> {ok}
-    GET    /health          -> {status: ok}
+    GET    /health           -> {status, identity (encrypted)}
+    POST   /login            {data (encrypted)} -> {token (encrypted)}
+    GET    /api/users        -> [{username, token, created, expires, active}]
+    POST   /api/users        {username, password, days} -> {token, expires}
+    PUT    /api/users        {username, password?, days?} -> {token, expires}
+    DELETE /api/users        {username} -> {ok}
+    POST   /verify           {username, password} -> token
+    GET    /health           -> {status: ok}
 """
 
 import argparse
@@ -24,12 +27,42 @@ import sys
 import threading
 import time
 import uuid
+import base64
 from datetime import datetime, timedelta
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 
+try:
+    from Crypto.Cipher import AES
+    from Crypto.Util.Padding import pad, unpad
+    HAS_CRYPTO = True
+except ImportError:
+    HAS_CRYPTO = False
+    print("[WARN] pycryptodome not installed. Install with: pip install pycryptodome")
+
 DATA_FILE = Path(__file__).parent / "users.json"
 _users_lock = threading.Lock()
+
+# ─── AES Crypto (matches Java AES/ECB/PKCS5Padding) ─────────────────────────
+
+AES_KEY = b"NavenSecure2024!"  # 16 bytes = AES-128
+SERVER_IDENTITY = "Naven-Server-2024-Secure"
+
+
+def aes_encrypt(plain_text: str) -> str:
+    if not HAS_CRYPTO:
+        return plain_text
+    cipher = AES.new(AES_KEY, AES.MODE_ECB)
+    ct = cipher.encrypt(pad(plain_text.encode("utf-8"), AES.block_size))
+    return base64.b64encode(ct).decode("utf-8")
+
+
+def aes_decrypt(cipher_text: str) -> str:
+    if not HAS_CRYPTO:
+        return cipher_text
+    cipher = AES.new(AES_KEY, AES.MODE_ECB)
+    pt = unpad(cipher.decrypt(base64.b64decode(cipher_text)), AES.block_size)
+    return pt.decode("utf-8")
 
 
 # ─── User Store ───────────────────────────────────────────────────────────────
@@ -164,7 +197,8 @@ class VerifyHTTPHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == "/health":
-            self._send_json(200, {"status": "ok"})
+            encrypted_identity = aes_encrypt(SERVER_IDENTITY)
+            self._send_json(200, {"status": "ok", "identity": encrypted_identity})
         elif self.path == "/api/users":
             self._send_json(200, list_users())
         else:
@@ -172,7 +206,24 @@ class VerifyHTTPHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         data = self._read_json()
-        if self.path == "/verify":
+        if self.path == "/login":
+            encrypted_data = data.get("data", "")
+            try:
+                decrypted = aes_decrypt(encrypted_data)
+                parts = decrypted.split("\n", 1)
+                username = parts[0].strip() if len(parts) > 0 else ""
+                password = parts[1].strip() if len(parts) > 1 else ""
+            except Exception:
+                self._send_json(400, {"error": "Invalid encrypted data"})
+                return
+
+            ok, result = verify_user(username, password)
+            if ok:
+                encrypted_token = aes_encrypt(result)
+                self._send_json(200, {"token": encrypted_token})
+            else:
+                self._send_json(401, {"error": result})
+        elif self.path == "/verify":
             ok, result = verify_user(data.get("username", ""), data.get("password", ""))
             if ok:
                 self.send_response(200)

@@ -25,16 +25,20 @@ public class LoginScreen extends Screen {
    private static final int INPUT_BORDER_FOCUS = 0xFF58A6FF;
    private static final int SUCCESS = 0xFF3FB950;
    private static final int ERROR = 0xFFF85149;
+   private static final int WARNING = 0xFFD29922;
 
    private static final int CARD_WIDTH = 320;
    private static final int CARD_HEIGHT = 300;
    private static final int INPUT_HEIGHT = 36;
    private static final int BTN_HEIGHT = 38;
 
+   private enum Stage { CHECKING, IDENTITY_OK, LOGIN, ERROR }
+   private Stage stage = Stage.CHECKING;
+   private String statusMessage = "Connecting to server...";
+   private int statusColor = TEXT_SECONDARY;
+
    private EditBox usernameInput;
    private EditBox passwordInput;
-   private String statusMessage = "";
-   private int statusColor = TEXT_SECONDARY;
    private boolean verifying = false;
    private boolean showSuccess = false;
    private int successTimer = 0;
@@ -65,7 +69,26 @@ public class LoginScreen extends Screen {
 
       this.addWidget(this.usernameInput);
       this.addWidget(this.passwordInput);
-      this.setInitialFocus(this.usernameInput);
+      this.usernameInput.setVisible(false);
+      this.passwordInput.setVisible(false);
+
+      new Thread(this::checkIdentity, "Naven-Identity").start();
+   }
+
+   private void checkIdentity() {
+      String identity = VerifyManager.fetchServerIdentity();
+      if (VerifyManager.verifyIdentity(identity)) {
+         this.stage = Stage.IDENTITY_OK;
+         this.statusMessage = "Identity verified. Please sign in.";
+         this.statusColor = SUCCESS;
+         this.usernameInput.setVisible(true);
+         this.passwordInput.setVisible(true);
+         this.setInitialFocus(this.usernameInput);
+      } else {
+         this.stage = Stage.ERROR;
+         this.statusMessage = "Identity verification failed!";
+         this.statusColor = ERROR;
+      }
    }
 
    public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
@@ -87,53 +110,70 @@ public class LoginScreen extends Screen {
          this.width / 2 - this.font.width("Naven") / 2,
          cardY + 42, TEXT_PRIMARY, false);
 
-      g.drawString(this.font, "Sign in to continue",
-         this.width / 2 - this.font.width("Sign in to continue") / 2,
-         cardY + 58, TEXT_SECONDARY, false);
+      if (this.stage == Stage.CHECKING) {
+         String dots = ".".repeat((int)(System.currentTimeMillis() / 500) % 4);
+         g.drawString(this.font, "Connecting" + dots,
+            this.width / 2 - this.font.width("Connecting" + dots) / 2,
+            cardY + 80, TEXT_SECONDARY, false);
+      } else if (this.stage == Stage.ERROR) {
+         g.drawString(this.font, "Access Denied",
+            this.width / 2 - this.font.width("Access Denied") / 2,
+            cardY + 65, ERROR, false);
 
-      g.drawString(this.font, "Username", inputX, cardY + 82, TEXT_SECONDARY, false);
-      if (this.usernameInput != null) {
-         RenderUtils.drawRoundedRect(stack, inputX, cardY + 95, inputWidth, INPUT_HEIGHT, 6, INPUT_BG);
-         int border = this.usernameInput.isFocused() ? INPUT_BORDER_FOCUS : INPUT_BORDER;
-         g.fill(inputX, cardY + 95, inputX + inputWidth, cardY + 96, border);
-         g.fill(inputX, cardY + 95 + INPUT_HEIGHT - 1, inputX + inputWidth, cardY + 95 + INPUT_HEIGHT, border);
-         g.fill(inputX, cardY + 95, inputX + 1, cardY + 95 + INPUT_HEIGHT, border);
-         g.fill(inputX + inputWidth - 1, cardY + 95, inputX + inputWidth, cardY + 95 + INPUT_HEIGHT, border);
-         this.usernameInput.render(g, mouseX, mouseY, partialTick);
+         int iconY = cardY + 100;
+         RenderUtils.drawRoundedRect(stack, this.width / 2 - 24, iconY, 48, 48, 24, 0x20F85149);
+         g.drawString(this.font, "!",
+            this.width / 2 - this.font.width("!") / 2,
+            iconY + 14, ERROR, false);
+      } else if (this.stage == Stage.LOGIN || this.stage == Stage.IDENTITY_OK) {
+         g.drawString(this.font, "Sign in to continue",
+            this.width / 2 - this.font.width("Sign in to continue") / 2,
+            cardY + 58, TEXT_SECONDARY, false);
+
+         g.drawString(this.font, "Username", inputX, cardY + 82, TEXT_SECONDARY, false);
+         if (this.usernameInput != null && this.usernameInput.isVisible()) {
+            RenderUtils.drawRoundedRect(stack, inputX, cardY + 95, inputWidth, INPUT_HEIGHT, 6, INPUT_BG);
+            int border = this.usernameInput.isFocused() ? INPUT_BORDER_FOCUS : INPUT_BORDER;
+            g.fill(inputX, cardY + 95, inputX + inputWidth, cardY + 96, border);
+            g.fill(inputX, cardY + 95 + INPUT_HEIGHT - 1, inputX + inputWidth, cardY + 95 + INPUT_HEIGHT, border);
+            g.fill(inputX, cardY + 95, inputX + 1, cardY + 95 + INPUT_HEIGHT, border);
+            g.fill(inputX + inputWidth - 1, cardY + 95, inputX + inputWidth, cardY + 95 + INPUT_HEIGHT, border);
+            this.usernameInput.render(g, mouseX, mouseY, partialTick);
+         }
+
+         g.drawString(this.font, "Password", inputX, cardY + 132, TEXT_SECONDARY, false);
+         if (this.passwordInput != null && this.passwordInput.isVisible()) {
+            RenderUtils.drawRoundedRect(stack, inputX, cardY + 145, inputWidth, INPUT_HEIGHT, 6, INPUT_BG);
+            int border = this.passwordInput.isFocused() ? INPUT_BORDER_FOCUS : INPUT_BORDER;
+            g.fill(inputX, cardY + 145, inputX + inputWidth, cardY + 146, border);
+            g.fill(inputX, cardY + 145 + INPUT_HEIGHT - 1, inputX + inputWidth, cardY + 145 + INPUT_HEIGHT, border);
+            g.fill(inputX, cardY + 145, inputX + 1, cardY + 145 + INPUT_HEIGHT, border);
+            g.fill(inputX + inputWidth - 1, cardY + 145, inputX + inputWidth, cardY + 145 + INPUT_HEIGHT, border);
+            this.passwordInput.render(g, mouseX, mouseY, partialTick);
+         }
+
+         int btnX = cardX + 30;
+         int btnY = cardY + 200;
+         int btnWidth = CARD_WIDTH - 60;
+         boolean hoveringBtn = mouseX >= btnX && mouseX <= btnX + btnWidth
+            && mouseY >= btnY && mouseY <= btnY + BTN_HEIGHT;
+
+         int btnBg;
+         if (this.showSuccess) {
+            btnBg = SUCCESS;
+         } else if (this.verifying) {
+            btnBg = 0xFF21262D;
+         } else {
+            btnBg = hoveringBtn ? ACCENT_HOVER : ACCENT;
+         }
+
+         RenderUtils.drawRoundedRect(stack, btnX, btnY, btnWidth, BTN_HEIGHT, 6, btnBg);
+
+         String btnText = this.showSuccess ? "Welcome!" : (this.verifying ? "Signing in..." : "Sign In");
+         g.drawString(this.font, btnText,
+            this.width / 2 - this.font.width(btnText) / 2,
+            btnY + 12, TEXT_PRIMARY, false);
       }
-
-      g.drawString(this.font, "Password", inputX, cardY + 132, TEXT_SECONDARY, false);
-      if (this.passwordInput != null) {
-         RenderUtils.drawRoundedRect(stack, inputX, cardY + 145, inputWidth, INPUT_HEIGHT, 6, INPUT_BG);
-         int border = this.passwordInput.isFocused() ? INPUT_BORDER_FOCUS : INPUT_BORDER;
-         g.fill(inputX, cardY + 145, inputX + inputWidth, cardY + 146, border);
-         g.fill(inputX, cardY + 145 + INPUT_HEIGHT - 1, inputX + inputWidth, cardY + 145 + INPUT_HEIGHT, border);
-         g.fill(inputX, cardY + 145, inputX + 1, cardY + 145 + INPUT_HEIGHT, border);
-         g.fill(inputX + inputWidth - 1, cardY + 145, inputX + inputWidth, cardY + 145 + INPUT_HEIGHT, border);
-         this.passwordInput.render(g, mouseX, mouseY, partialTick);
-      }
-
-      int btnX = cardX + 30;
-      int btnY = cardY + 200;
-      int btnWidth = CARD_WIDTH - 60;
-      boolean hoveringBtn = mouseX >= btnX && mouseX <= btnX + btnWidth
-         && mouseY >= btnY && mouseY <= btnY + BTN_HEIGHT;
-
-      int btnBg;
-      if (this.showSuccess) {
-         btnBg = SUCCESS;
-      } else if (this.verifying) {
-         btnBg = 0xFF21262D;
-      } else {
-         btnBg = hoveringBtn ? ACCENT_HOVER : ACCENT;
-      }
-
-      RenderUtils.drawRoundedRect(stack, btnX, btnY, btnWidth, BTN_HEIGHT, 6, btnBg);
-
-      String btnText = this.showSuccess ? "Welcome!" : (this.verifying ? "Signing in..." : "Sign In");
-      g.drawString(this.font, btnText,
-         this.width / 2 - this.font.width(btnText) / 2,
-         btnY + 12, TEXT_PRIMARY, false);
 
       if (!this.statusMessage.isEmpty()) {
          g.drawString(this.font, this.statusMessage,
@@ -180,7 +220,7 @@ public class LoginScreen extends Screen {
    }
 
    private void doVerify() {
-      if (this.verifying || this.showSuccess) return;
+      if (this.verifying || this.showSuccess || this.stage != Stage.IDENTITY_OK) return;
 
       String username = this.usernameInput != null ? this.usernameInput.getValue().trim() : "";
       String password = this.passwordInput != null ? this.passwordInput.getValue().trim() : "";
@@ -197,11 +237,11 @@ public class LoginScreen extends Screen {
       }
 
       this.verifying = true;
-      this.statusMessage = "Verifying...";
+      this.statusMessage = "Encrypting credentials...";
       this.statusColor = TEXT_SECONDARY;
 
       new Thread(() -> {
-         VerifyManager.verify(username, password);
+         VerifyManager.verifyCredentials(username, password);
          this.statusMessage = Naven.verifyStatus;
          this.statusColor = Naven.verified ? SUCCESS : ERROR;
          this.verifying = false;
