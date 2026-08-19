@@ -330,31 +330,35 @@ class FluentEntry(tk.Frame):
         self.entry.insert(0, val)
 
 
-class FluentButton(tk.Canvas):
+class FluentButton(tk.Frame):
     def __init__(self, parent, text, color=None, hover_color=None, command=None, width=120, height=34, **kw):
-        super().__init__(parent, width=width, height=height, bg=FluentColors.BG,
-                         highlightthickness=0, cursor="hand2", **kw)
-        self._text = text
+        super().__init__(parent, bg=color or FluentColors.BTN_PRIMARY, cursor="hand2", **kw)
+        self.configure(width=width, height=height)
+        self.pack_propagate(False)
         self._color = color or FluentColors.BTN_PRIMARY
         self._hover = hover_color or FluentColors.SUCCESS
         self._cmd = command
-        self._w = width
-        self._h = height
-        self._draw(self._color)
-        self.bind("<Enter>", lambda e: self._draw(self._hover))
-        self.bind("<Leave>", lambda e: self._draw(self._color))
-        self.bind("<Button-1>", lambda e: self._cmd() if self._cmd else None)
 
-    def _draw(self, bg):
-        self.delete("all")
-        r = 6
-        self.create_arc(0, 0, r * 2, r * 2, start=90, extent=90, fill=bg, outline="")
-        self.create_arc(self._w - r * 2, 0, self._w, r * 2, start=0, extent=90, fill=bg, outline="")
-        self.create_arc(0, self._h - r * 2, r * 2, self._h, start=180, extent=90, fill=bg, outline="")
-        self.create_arc(self._w - r * 2, self._h - r * 2, self._w, self._h, start=270, extent=90, fill=bg, outline="")
-        self.create_rectangle(r, 0, self._w - r, self._h, fill=bg, outline="")
-        self.create_rectangle(0, r, self._w, self._h - r, fill=bg, outline="")
-        self.create_text(self._w // 2, self._h // 2, text=self._text, fill=FluentColors.TEXT, font=_font(11, True))
+        self._label = tk.Label(self, text=text, bg=self._color, fg=FluentColors.TEXT,
+                               font=_font(11, True))
+        self._label.pack(expand=True, fill="both")
+
+        for w in (self, self._label):
+            w.bind("<Enter>", self._on_enter)
+            w.bind("<Leave>", self._on_leave)
+            w.bind("<Button-1>", self._on_click)
+
+    def _on_enter(self, e=None):
+        self.configure(bg=self._hover)
+        self._label.configure(bg=self._hover)
+
+    def _on_leave(self, e=None):
+        self.configure(bg=self._color)
+        self._label.configure(bg=self._color)
+
+    def _on_click(self, e=None):
+        if self._cmd:
+            self._cmd()
 
 
 class ServerGUI:
