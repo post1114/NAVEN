@@ -112,7 +112,7 @@ public class TickBase extends Module {
    public void onTick(EventRunTicks event) {
       if (event.getType() != EventType.PRE) return;
       if (mc.player == null || mc.level == null || mc.getConnection() == null) return;
-      if (mc.player.vehicle != null) return;
+      if (mc.player.getVehicle() != null) return;
       if (Naven.getInstance().getModuleManager().getModule(Blink.class).isEnabled()) return;
       if (mc.player.isDeadOrDying() || !mc.player.isAlive() || mc.screen instanceof ProgressScreen || mc.screen instanceof DeathScreen) {
          this.resetState();
@@ -198,7 +198,7 @@ public class TickBase extends Module {
    @EventTarget
    public void onInput(EventMoveInput event) {
       if (mc.player == null || mc.level == null) return;
-      if (mc.player.vehicle != null) return;
+      if (mc.player.getVehicle() != null) return;
       if (Naven.getInstance().getModuleManager().getModule(Blink.class).isEnabled()) return;
 
       this.tickBuffer.clear();

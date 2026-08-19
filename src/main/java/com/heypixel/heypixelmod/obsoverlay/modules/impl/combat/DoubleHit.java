@@ -70,7 +70,8 @@ public class DoubleHit extends Module {
                this.attackIndex++;
             }
          } else {
-            entry.setValue(delay - 1);
+            it.remove();
+            scheduledAttacks.put(delay - 1, target);
          }
       }
    }

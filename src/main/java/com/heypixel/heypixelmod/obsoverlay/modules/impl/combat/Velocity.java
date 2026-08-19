@@ -18,6 +18,7 @@ import com.heypixel.heypixelmod.obsoverlay.values.ValueBuilder;
 import com.heypixel.heypixelmod.obsoverlay.values.impl.BooleanValue;
 import com.heypixel.heypixelmod.obsoverlay.values.impl.FloatValue;
 import java.util.concurrent.LinkedBlockingDeque;
+import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.gui.screens.DeathScreen;
 import net.minecraft.client.gui.screens.ProgressScreen;
 import net.minecraft.network.protocol.Packet;
@@ -115,7 +116,9 @@ public class Velocity extends Module {
             Packet<?> packet = this.packetQueue.poll();
             if (packet == null) continue;
             try {
-               packet.handle(mc.getConnection());
+                @SuppressWarnings("unchecked")
+                Packet<ClientPacketListener> rawPacket = (Packet<ClientPacketListener>) packet;
+                rawPacket.handle(mc.getConnection());
             } catch (Exception e) {
                e.printStackTrace();
             }
@@ -199,7 +202,7 @@ public class Velocity extends Module {
                event.setCancelled(true);
             } else if (canAttack) {
                this.attackTarget = target;
-               this.attacksRemaining = this.attackAmount.getCurrentValue().intValue();
+               this.attacksRemaining = (int) this.attackAmount.getCurrentValue();
             } else {
                this.isSuspending = true;
                this.suspendTicks = 0;
@@ -271,7 +274,7 @@ public class Velocity extends Module {
             if (onGround && canAttack && sprinting) {
                this.isFlushing = true;
                this.attackTarget = target;
-               this.attacksRemaining = this.attackAmount.getCurrentValue().intValue();
+               this.attacksRemaining = (int) this.attackAmount.getCurrentValue();
                this.sendMovePackets();
                this.applyKnockbackPacket();
 
@@ -414,7 +417,7 @@ public class Velocity extends Module {
       if (this.attacksRemaining <= 0) {
          this.clearTarget();
          if (this.instantAttack.getCurrentValue()) {
-            this.log("Attack (" + this.attackAmount.getCurrentValue().intValue() + ")");
+            this.log("Attack (" + (int) this.attackAmount.getCurrentValue() + ")");
          }
       }
    }
