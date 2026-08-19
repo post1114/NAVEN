@@ -6,10 +6,13 @@ import com.heypixel.heypixelmod.obsoverlay.events.impl.EventClick;
 import com.heypixel.heypixelmod.obsoverlay.events.impl.EventRunTicks;
 import com.heypixel.heypixelmod.obsoverlay.events.impl.EventShutdown;
 import com.heypixel.heypixelmod.obsoverlay.modules.impl.render.Glow;
+import com.heypixel.heypixelmod.obsoverlay.ui.LoginScreen;
 import com.heypixel.heypixelmod.obsoverlay.utils.AnimationUtils;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.main.GameConfig;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.fml.ModList;
@@ -57,6 +60,18 @@ public class MixinMinecraft {
       }
 
       ModList.get().getModFiles().removeAll(fileInfoToRemove);
+   }
+
+   @Inject(
+      method = {"setScreen"},
+      at = {@At("HEAD")},
+      cancellable = true
+   )
+   private void onSetScreen(Screen screen, CallbackInfo ci) {
+      if (Naven.VERIFY_ENABLED && !Naven.verified && screen instanceof TitleScreen) {
+         ci.cancel();
+         Minecraft.getInstance().setScreen(new LoginScreen());
+      }
    }
 
    @Inject(
