@@ -10,7 +10,6 @@ import com.heypixel.heypixelmod.obsoverlay.files.FileManager;
 import com.heypixel.heypixelmod.obsoverlay.modules.ModuleManager;
 import com.heypixel.heypixelmod.obsoverlay.modules.impl.render.ClickGUIModule;
 import com.heypixel.heypixelmod.obsoverlay.ui.notification.NotificationManager;
-import com.heypixel.heypixelmod.obsoverlay.nel.NelManager;
 import com.heypixel.heypixelmod.obsoverlay.utils.EntityWatcher;
 import com.heypixel.heypixelmod.obsoverlay.utils.EventWrapper;
 import com.heypixel.heypixelmod.obsoverlay.utils.LogUtils;
@@ -81,9 +80,8 @@ public class Naven {
       this.eventManager.register(new RotationManager());
       this.eventManager.register(new NetworkUtils());
       this.eventManager.register(new ServerUtils());
-      this.eventManager.register(new EntityWatcher());
-      NelManager.getInstance().init();
-      MinecraftForge.EVENT_BUS.register(this.eventWrapper);
+this.eventManager.register(new EntityWatcher());
+       MinecraftForge.EVENT_BUS.register(this.eventWrapper);
    }
 
    public static void modRegister() {
