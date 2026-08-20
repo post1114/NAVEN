@@ -10,6 +10,7 @@ import com.heypixel.heypixelmod.obsoverlay.modules.impl.combat.AntiBots;
 import com.heypixel.heypixelmod.obsoverlay.modules.impl.combat.AttackCrystal;
 import com.heypixel.heypixelmod.obsoverlay.modules.impl.combat.Aura;
 import com.heypixel.heypixelmod.obsoverlay.modules.impl.combat.AutoClicker;
+import com.heypixel.heypixelmod.obsoverlay.modules.impl.combat.AutoRod;
 import com.heypixel.heypixelmod.obsoverlay.modules.impl.combat.Criticals;
 import com.heypixel.heypixelmod.obsoverlay.modules.impl.combat.DoubleHit;
 import com.heypixel.heypixelmod.obsoverlay.modules.impl.combat.TickBase;

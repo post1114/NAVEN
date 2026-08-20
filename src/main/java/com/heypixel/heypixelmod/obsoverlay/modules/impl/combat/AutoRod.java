@@ -7,6 +7,7 @@ import com.heypixel.heypixelmod.obsoverlay.events.impl.EventRunTicks;
 import com.heypixel.heypixelmod.obsoverlay.modules.Category;
 import com.heypixel.heypixelmod.obsoverlay.modules.Module;
 import com.heypixel.heypixelmod.obsoverlay.modules.ModuleInfo;
+import com.heypixel.heypixelmod.obsoverlay.utils.PacketUtils;
 import com.heypixel.heypixelmod.obsoverlay.utils.rotation.RotationManager;
 import com.heypixel.heypixelmod.obsoverlay.utils.rotation.RotationUtils;
 import com.heypixel.heypixelmod.obsoverlay.values.ValueBuilder;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -113,7 +115,7 @@ public class AutoRod extends Module {
          currentBobber = null;
       }
       if (currentBobber == null) {
-         for (Entity entity : mc.level.getEntities()) {
+         for (Entity entity : mc.level.entitiesForRendering()) {
             if (entity instanceof FishingHook hook && hook.getPlayerOwner() == mc.player) {
                currentBobber = hook;
                break;
@@ -142,30 +144,30 @@ public class AutoRod extends Module {
       return -1;
    }
 
-   private void castRod(int slot, LivingEntity target) {
-      mc.player.getInventory().selected = slot;
-      mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND);
+    private void castRod(int slot, LivingEntity target) {
+       mc.player.getInventory().selected = slot;
 
-      if (autoRotate.getCurrentValue()) {
-         Vec3 eyes = mc.player.getEyePosition();
-         Vec3 targetPos = target.position().add(0, target.getBbHeight() * 0.5, 0);
-         RotationManager.rotations = RotationUtils.getRotations(eyes, targetPos);
-         RotationManager.active = true;
-      }
+       if (autoRotate.getCurrentValue()) {
+          Vec3 targetPos = target.position().add(0, target.getBbHeight() * 0.5, 0);
+          RotationManager.rotations = RotationUtils.getRotationsVector(targetPos);
+          RotationManager.active = true;
+       }
 
-      waitingForPull = true;
-      pullTicks = 0;
-   }
+       PacketUtils.sendSequencedPacket(id -> new ServerboundUseItemPacket(InteractionHand.MAIN_HAND, id));
 
-   private void reelIn(int slot) {
-      mc.player.getInventory().selected = slot;
-      mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND);
+       waitingForPull = true;
+       pullTicks = 0;
+    }
 
-         cooldownTimer = (int) cooldown.getCurrentValue();
-      waitingForPull = false;
-      pullTicks = 0;
-      currentBobber = null;
-   }
+    private void reelIn(int slot) {
+       mc.player.getInventory().selected = slot;
+       PacketUtils.sendSequencedPacket(id -> new ServerboundUseItemPacket(InteractionHand.MAIN_HAND, id));
+
+       cooldownTimer = (int) cooldown.getCurrentValue();
+       waitingForPull = false;
+       pullTicks = 0;
+       currentBobber = null;
+    }
 
    @Override
    public void onDisable() {
