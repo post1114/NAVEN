@@ -5,8 +5,8 @@ import com.heypixel.heypixelmod.obsoverlay.events.api.EventTarget;
 import com.heypixel.heypixelmod.obsoverlay.events.api.types.EventType;
 import com.heypixel.heypixelmod.obsoverlay.events.impl.EventMotion;
 import com.heypixel.heypixelmod.obsoverlay.events.impl.EventPacket;
-import com.heypixel.heypixelmod.obsoverlay.events.impl.EventSlowdown;
 import com.heypixel.heypixelmod.obsoverlay.events.impl.EventRunTicks;
+import com.heypixel.heypixelmod.obsoverlay.events.impl.EventSlowdown;
 import com.heypixel.heypixelmod.obsoverlay.modules.Category;
 import com.heypixel.heypixelmod.obsoverlay.modules.Module;
 import com.heypixel.heypixelmod.obsoverlay.modules.ModuleInfo;
@@ -14,7 +14,8 @@ import com.heypixel.heypixelmod.obsoverlay.utils.PacketUtils;
 import com.heypixel.heypixelmod.obsoverlay.values.ValueBuilder;
 import com.heypixel.heypixelmod.obsoverlay.values.impl.BooleanValue;
 import com.heypixel.heypixelmod.obsoverlay.values.impl.FloatValue;
-import com.heypixel.heypixelmod.obsoverlay.values.impl.ModeValue;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
@@ -25,6 +26,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.PotionItem;
 import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.ItemStack;
 
 @ModuleInfo(
    name = "NoSlow",
@@ -34,39 +36,28 @@ import net.minecraft.world.item.UseAnim;
 public class NoSlow extends Module {
    public static NoSlow INSTANCE;
 
-   private final ModeValue mode = ValueBuilder.create(this, "Mode")
-      .setModes("Grim", "Packet", "Spartan", "Vanilla")
-      .setDefaultModeIndex(0)
-      .build()
-      .getModeValue();
-
    private final BooleanValue bowNoSlow = ValueBuilder.create(this, "Bow")
       .setDefaultBooleanValue(true)
-      .setVisibility(() -> mode.isCurrentMode("Grim"))
       .build()
       .getBooleanValue();
 
    private final BooleanValue crossbowNoSlow = ValueBuilder.create(this, "Crossbow")
       .setDefaultBooleanValue(true)
-      .setVisibility(() -> mode.isCurrentMode("Grim"))
       .build()
       .getBooleanValue();
 
    private final BooleanValue foodNoSlow = ValueBuilder.create(this, "Food")
       .setDefaultBooleanValue(true)
-      .setVisibility(() -> mode.isCurrentMode("Grim"))
       .build()
       .getBooleanValue();
 
    private final BooleanValue potionNoSlow = ValueBuilder.create(this, "Potion")
       .setDefaultBooleanValue(true)
-      .setVisibility(() -> mode.isCurrentMode("Grim"))
       .build()
       .getBooleanValue();
 
    private final BooleanValue shieldNoSlow = ValueBuilder.create(this, "Shield")
       .setDefaultBooleanValue(true)
-      .setVisibility(() -> mode.isCurrentMode("Grim"))
       .build()
       .getBooleanValue();
 
@@ -80,7 +71,7 @@ public class NoSlow extends Module {
       .setMinFloatValue(1.0F)
       .setMaxFloatValue(20.0F)
       .setFloatStep(1.0F)
-      .setVisibility(() -> mode.isCurrentMode("Grim") && bowNoSlow.getCurrentValue())
+      .setVisibility(() -> bowNoSlow.getCurrentValue())
       .build()
       .getFloatValue();
 
@@ -89,7 +80,6 @@ public class NoSlow extends Module {
       .setMinFloatValue(0.0F)
       .setMaxFloatValue(500.0F)
       .setFloatStep(10.0F)
-      .setVisibility(() -> mode.isCurrentMode("Grim"))
       .build()
       .getFloatValue();
 
@@ -144,24 +134,7 @@ public class NoSlow extends Module {
       ItemStack stack = mc.player.getUseItem();
       if (stack.isEmpty()) return;
 
-      if (mode.isCurrentMode("Grim")) {
-         handleGrimSlowdown(event, stack);
-         return;
-      }
-
-      if (mode.isCurrentMode("Packet")) {
-         handlePacketSlowdown(event, stack);
-         return;
-      }
-
-      if (mode.isCurrentMode("Spartan")) {
-         handleSpartanSlowdown(event, stack);
-         return;
-      }
-
-      if (mode.isCurrentMode("Vanilla")) {
-         handleVanillaSlowdown(event, stack);
-      }
+      handleGrimSlowdown(event, stack);
    }
 
    private void handleGrimSlowdown(EventSlowdown event, ItemStack stack) {
@@ -186,28 +159,6 @@ public class NoSlow extends Module {
       }
    }
 
-   private void handlePacketSlowdown(EventSlowdown event, ItemStack stack) {
-      if (!isFoodOrPotion(stack) || mc.player.getUseItemRemainingTicks() <= 0) return;
-      event.setSlowdown(false);
-      if (keepSprinting.getCurrentValue()) {
-         mc.player.setSprinting(true);
-      }
-   }
-
-   private void handleSpartanSlowdown(EventSlowdown event, ItemStack stack) {
-      event.setSlowdown(false);
-      if (keepSprinting.getCurrentValue()) {
-         mc.player.setSprinting(true);
-      }
-   }
-
-   private void handleVanillaSlowdown(EventSlowdown event, ItemStack stack) {
-      if (mc.player.getUseItemRemainingTicks() % 2 != 0 && mc.player.getUseItemRemainingTicks() <= 30) {
-         event.setSlowdown(false);
-         mc.player.setSprinting(true);
-      }
-   }
-
    @EventTarget
    public void onRunTicks(EventRunTicks event) {
       if (mc.player == null) {
@@ -219,7 +170,7 @@ public class NoSlow extends Module {
          blinkTicks++;
       }
 
-      if ((!mode.isCurrentMode("Grim") || !bowNoSlow.getCurrentValue()) && !isIdleState()) {
+      if (!bowNoSlow.getCurrentValue() && !isIdleState()) {
          clearState();
       }
 
@@ -252,7 +203,7 @@ public class NoSlow extends Module {
          return;
       }
 
-      if (mode.isCurrentMode("Grim") && bowNoSlow.getCurrentValue() && didSwapHand && !isBlinking) {
+      if (bowNoSlow.getCurrentValue() && didSwapHand && !isBlinking) {
          if (useHand != lastUseHand) {
             sendSwapOffhand();
          }
@@ -266,7 +217,7 @@ public class NoSlow extends Module {
          return;
       }
 
-      if (mode.isCurrentMode("Grim") && bowNoSlow.getCurrentValue() && shouldReleaseItem
+      if (bowNoSlow.getCurrentValue() && shouldReleaseItem
          && mc.player.isUsingItem() && canSwapHands()) {
          shouldReleaseItem = false;
          startUseItemDefault(mc.player.getUsedItemHand());
@@ -308,7 +259,7 @@ public class NoSlow extends Module {
       if (event.getPacket() instanceof ServerboundUseItemPacket usePacket) {
          if (didSwapHand || releaseTicksRemaining > 0) {
             event.setCancelled(true);
-         } else if (mode.isCurrentMode("Grim") && bowNoSlow.getCurrentValue()) {
+         } else if (bowNoSlow.getCurrentValue()) {
             if (System.currentTimeMillis() - timer < timerDelay.getCurrentValue() && releaseTicksRemaining <= 0) {
                event.setCancelled(true);
             } else if (!canSwapHands()) {
@@ -384,14 +335,6 @@ public class NoSlow extends Module {
       return anim == UseAnim.EAT || anim == UseAnim.DRINK;
    }
 
-   private void handleOffhandSlowdown(EventSlowdown event, ItemStack stack) {
-      if (!isFoodOrPotion(stack) || mc.player.getUseItemRemainingTicks() <= 0) return;
-      event.setSlowdown(false);
-      if (keepSprinting.getCurrentValue()) {
-         mc.player.setSprinting(true);
-      }
-   }
-
    private void startBlink(int duration) {
       isBlinking = true;
       blinkTicks = 0;
@@ -425,7 +368,7 @@ public class NoSlow extends Module {
       return mc.player != null && mc.player.isUsingItem();
    }
 
-   private boolean shouldQueuePacket(Packet<?> packet) {
+   private boolean shouldQueuePacket(Object packet) {
       return packet instanceof ServerboundUseItemPacket
          || packet instanceof ServerboundUseItemOnPacket
          || packet instanceof ServerboundPlayerActionPacket;
