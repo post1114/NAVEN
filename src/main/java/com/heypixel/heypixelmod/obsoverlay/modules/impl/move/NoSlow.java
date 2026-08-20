@@ -144,9 +144,9 @@ public class NoSlow extends Module {
       boolean isEdible = stack.isEdible();
       boolean isPotion = item instanceof PotionItem;
 
-      if (isBow && crossbowNoSlow.getCurrentValue()) {
+      if (isBow && bowNoSlow.getCurrentValue()) {
          event.setSlowdown(mc.player.tickCount % 3 != 0);
-      } else if (isCrossbow && foodNoSlow.getCurrentValue()) {
+      } else if (isCrossbow && crossbowNoSlow.getCurrentValue()) {
          event.setSlowdown(mc.player.tickCount % 3 != 0);
       } else if (isEdible && foodNoSlow.getCurrentValue() || isPotion && potionNoSlow.getCurrentValue()) {
          event.setSlowdown(mc.player.getUseItemRemainingTicks() >= 1 || mc.player.tickCount % 3 != 0);
