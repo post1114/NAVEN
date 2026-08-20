@@ -1,6 +1,5 @@
 package com.heypixel.heypixelmod.obsoverlay.modules.impl.move;
 
-import com.heypixel.heypixelmod.obsoverlay.Naven;
 import com.heypixel.heypixelmod.obsoverlay.events.api.EventTarget;
 import com.heypixel.heypixelmod.obsoverlay.events.api.types.EventType;
 import com.heypixel.heypixelmod.obsoverlay.events.impl.EventMotion;
@@ -16,6 +15,7 @@ import com.heypixel.heypixelmod.obsoverlay.values.impl.BooleanValue;
 import com.heypixel.heypixelmod.obsoverlay.values.impl.FloatValue;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
@@ -148,10 +148,8 @@ public class NoSlow extends Module {
          event.setSlowdown(mc.player.tickCount % 3 != 0);
       } else if (isCrossbow && crossbowNoSlow.getCurrentValue()) {
          event.setSlowdown(mc.player.tickCount % 3 != 0);
-      } else if (isEdible && foodNoSlow.getCurrentValue() || isPotion && potionNoSlow.getCurrentValue()) {
+      } else if ((isEdible && foodNoSlow.getCurrentValue()) || (isPotion && potionNoSlow.getCurrentValue())) {
          event.setSlowdown(mc.player.getUseItemRemainingTicks() >= 1 || mc.player.tickCount % 3 != 0);
-      } else if (isBow && bowNoSlow.getCurrentValue()) {
-         event.setSlowdown(false);
       }
 
       if (keepSprinting.getCurrentValue()) {
@@ -212,7 +210,7 @@ public class NoSlow extends Module {
          timer = System.currentTimeMillis();
          releaseTicksRemaining = (int) useItemTicks.getCurrentValue();
          releaseUseKey();
-         PacketUtils.sendPacket(new ServerboundPlayerActionPacket(
+         sendPacket(new ServerboundPlayerActionPacket(
             ServerboundPlayerActionPacket.Action.RELEASE_USE_ITEM, BlockPos.ZERO, Direction.DOWN));
          return;
       }
@@ -235,28 +233,29 @@ public class NoSlow extends Module {
    public void onPacket(EventPacket event) {
       if (mc.player == null) return;
 
-      if (event.isIncoming() && shouldQueuePacket(event.getPacket())) {
+      if (event.getType() == EventType.SEND && shouldQueuePacket(event.getPacket())) {
          event.setCancelled(true);
          return;
       }
 
-      handleOffhandPacket(event);
-
       if (event.getPacket() instanceof ServerboundPlayerActionPacket actionPacket
+         && event.getType() == EventType.SEND
          && actionPacket.getAction() == ServerboundPlayerActionPacket.Action.RELEASE_USE_ITEM) {
          blinkTicks = Math.max(blinkTicks, 1);
       }
 
       if (event.getPacket() instanceof ServerboundUseItemOnPacket useOnPacket
+         && event.getType() == EventType.SEND
          && didSwapHand
          && useOnPacket.getHand() == useHand
          && mc.player.getInventory().selected == swapInitSlot) {
          InteractionHand other = useOnPacket.getHand() == InteractionHand.MAIN_HAND
             ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
-         PacketUtils.sendPacket(new ServerboundUseItemOnPacket(other, useOnPacket.getHitResult(), useOnPacket.getSequence()));
+         sendPacket(new ServerboundUseItemOnPacket(other, useOnPacket.getHitResult(), useOnPacket.getSequence()));
       }
 
-      if (event.getPacket() instanceof ServerboundUseItemPacket usePacket) {
+      if (event.getPacket() instanceof ServerboundUseItemPacket usePacket
+         && event.getType() == EventType.SEND) {
          if (didSwapHand || releaseTicksRemaining > 0) {
             event.setCancelled(true);
          } else if (bowNoSlow.getCurrentValue()) {
@@ -267,8 +266,8 @@ public class NoSlow extends Module {
             } else {
                ItemStack handStack = mc.player.getItemInHand(usePacket.getHand());
                UseAnim anim = handStack.getUseAnimation();
-               if ((anim == UseAnim.BOW && crossbowNoSlow.getCurrentValue())
-                  || (anim == UseAnim.CROSSBOW && !CrossbowItem.isCharged(handStack) && foodNoSlow.getCurrentValue())) {
+               if ((anim == UseAnim.BOW && bowNoSlow.getCurrentValue())
+                  || (anim == UseAnim.CROSSBOW && !CrossbowItem.isCharged(handStack) && crossbowNoSlow.getCurrentValue())) {
                   shouldReleaseItem = false;
                   startBlink(1);
                } else if (isEatOrDrink(handStack)) {
@@ -290,9 +289,9 @@ public class NoSlow extends Module {
       useHand = hand == InteractionHand.MAIN_HAND ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
       sendSwapOffhand();
       if (count > 0) {
-         PacketUtils.sendPacket(new ServerboundUseItemPacket(useHand, count));
+         sendPacket(new ServerboundUseItemPacket(useHand, count));
       } else {
-         PacketUtils.sendSequencedPacket(useHand, ServerboundUseItemPacket::new);
+         PacketUtils.sendSequencedPacket(seq -> new ServerboundUseItemPacket(useHand, seq));
       }
       startBlink(2);
    }
@@ -311,7 +310,7 @@ public class NoSlow extends Module {
       timer = System.currentTimeMillis();
       releaseTicksRemaining = (int) useItemTicks.getCurrentValue();
       releaseUseKey();
-      PacketUtils.sendPacket(new ServerboundPlayerActionPacket(
+      sendPacket(new ServerboundPlayerActionPacket(
          ServerboundPlayerActionPacket.Action.RELEASE_USE_ITEM, BlockPos.ZERO, Direction.DOWN));
    }
 
@@ -352,6 +351,12 @@ public class NoSlow extends Module {
       }
    }
 
+   private void sendPacket(Packet<?> packet) {
+      if (mc.getConnection() != null) {
+         mc.getConnection().send(packet);
+      }
+   }
+
    private void releaseUseKey() {
       mc.options.keyUse.setDown(true);
    }
@@ -372,9 +377,5 @@ public class NoSlow extends Module {
       return packet instanceof ServerboundUseItemPacket
          || packet instanceof ServerboundUseItemOnPacket
          || packet instanceof ServerboundPlayerActionPacket;
-   }
-
-   private void handleOffhandPacket(EventPacket event) {
-      // Handle offhand swap packets
    }
 }
