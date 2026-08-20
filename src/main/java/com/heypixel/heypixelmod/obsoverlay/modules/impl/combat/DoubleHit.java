@@ -7,6 +7,7 @@ import com.heypixel.heypixelmod.obsoverlay.events.impl.EventRunTicks;
 import com.heypixel.heypixelmod.obsoverlay.modules.Category;
 import com.heypixel.heypixelmod.obsoverlay.modules.Module;
 import com.heypixel.heypixelmod.obsoverlay.modules.ModuleInfo;
+import com.heypixel.heypixelmod.obsoverlay.utils.rotation.RotationManager;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -79,8 +80,18 @@ public class DoubleHit extends Module {
          mc.player.setSprinting(false);
       }
 
+      float oldYaw = mc.player.getYRot();
+      float oldPitch = mc.player.getXRot();
+      if (RotationManager.rotations != null) {
+         mc.player.setYRot(RotationManager.rotations.x);
+         mc.player.setXRot(RotationManager.rotations.y);
+      }
+
       mc.gameMode.attack(mc.player, target);
       mc.player.swing(InteractionHand.MAIN_HAND);
+
+      mc.player.setYRot(oldYaw);
+      mc.player.setXRot(oldPitch);
 
       if (pauseSprint && wasSprinting) {
          mc.player.setSprinting(true);
