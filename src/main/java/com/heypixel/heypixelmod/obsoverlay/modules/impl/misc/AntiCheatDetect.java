@@ -55,7 +55,7 @@ public class AntiCheatDetect extends Module {
       String result = guessAntiCheat(serverAddress, this.transactions);
       if (result != null) {
          Naven.getInstance().getNotificationManager().addNotification(
-            new Notification(NotificationLevel.INFO, "AntiCheat Detect", "Detected: " + result, 5000L)
+            new Notification(NotificationLevel.INFO, "AntiCheat Detect: " + result, 5000L)
          );
       }
    }
