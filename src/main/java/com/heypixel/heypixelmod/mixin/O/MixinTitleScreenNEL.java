@@ -1,7 +1,8 @@
 package com.heypixel.heypixelmod.mixin.O;
 
 import com.heypixel.heypixelmod.obsoverlay.nel.NelManager;
-import java.lang.reflect.Method;
+import java.lang.reflect.Field;
+import java.util.List;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
@@ -15,13 +16,21 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class MixinTitleScreenNEL {
 
    @Unique
-   private static Method naven_addRenderableWidget;
+   private static Field naven_renderables;
+   @Unique
+   private static Field naven_children;
+   @Unique
+   private static Field naven_narratables;
 
    static {
       try {
-         naven_addRenderableWidget = Screen.class.getDeclaredMethod("addRenderableWidget", net.minecraft.client.gui.components.GuiEventListener.class);
-         naven_addRenderableWidget.setAccessible(true);
-      } catch (NoSuchMethodException e) {
+         naven_renderables = Screen.class.getDeclaredField("renderables");
+         naven_renderables.setAccessible(true);
+         naven_children = Screen.class.getDeclaredField("children");
+         naven_children.setAccessible(true);
+         naven_narratables = Screen.class.getDeclaredField("narratables");
+         naven_narratables.setAccessible(true);
+      } catch (NoSuchFieldException e) {
          e.printStackTrace();
       }
    }
@@ -41,11 +50,11 @@ public class MixinTitleScreenNEL {
       ).bounds(rightX, screen.height / 4 + 48 + 72, 98, 20).build();
 
       try {
-         if (naven_addRenderableWidget != null) {
-            naven_addRenderableWidget.invoke(screen, nelButton);
-         }
-      } catch (Exception e) {
-         screen.addWidget(nelButton);
+         ((List) naven_renderables.get(screen)).add(nelButton);
+         ((List) naven_children.get(screen)).add(nelButton);
+         ((List) naven_narratables.get(screen)).add(nelButton);
+      } catch (IllegalAccessException e) {
+         e.printStackTrace();
       }
    }
 }

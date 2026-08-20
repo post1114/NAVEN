@@ -17,3 +17,7 @@ Thumbs.db
 
 # Minecraft run
 logs/
+
+# Decompiled MC source (reference only)
+/1201Forge-deobfuscatedsrc/
+/1201Forge-deobfuscatedsrc.zip
