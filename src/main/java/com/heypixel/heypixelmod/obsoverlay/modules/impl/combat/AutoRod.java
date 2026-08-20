@@ -54,10 +54,15 @@ public class AutoRod extends Module {
       .build()
       .getBooleanValue();
 
-   private final BooleanValue smartPull = ValueBuilder.create(this, "SmartPull")
-      .setDefaultBooleanValue(true)
-      .build()
-      .getBooleanValue();
+    private final BooleanValue smartPull = ValueBuilder.create(this, "SmartPull")
+       .setDefaultBooleanValue(true)
+       .build()
+       .getBooleanValue();
+
+    private final BooleanValue noDuringCombat = ValueBuilder.create(this, "NoDuringCombat")
+       .setDefaultBooleanValue(false)
+       .build()
+       .getBooleanValue();
 
    private int cooldownTimer = 0;
    private boolean waitingForPull = false;
@@ -76,6 +81,7 @@ public class AutoRod extends Module {
 
       if (mc.screen instanceof AbstractContainerScreen) return;
       if (mc.player.isUsingItem()) return;
+      if (noDuringCombat.getCurrentValue() && Velocity.isAttacking) return;
 
       int rodSlot = findRodSlot();
       if (rodSlot == -1) return;
