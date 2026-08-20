@@ -15,6 +15,7 @@ import com.heypixel.heypixelmod.obsoverlay.modules.impl.combat.Criticals;
 import com.heypixel.heypixelmod.obsoverlay.modules.impl.combat.DoubleHit;
 import com.heypixel.heypixelmod.obsoverlay.modules.impl.combat.TickBase;
 import com.heypixel.heypixelmod.obsoverlay.modules.impl.combat.Velocity;
+import com.heypixel.heypixelmod.obsoverlay.modules.impl.misc.AntiCheatDetect;
 import com.heypixel.heypixelmod.obsoverlay.modules.impl.misc.AntiFireball;
 import com.heypixel.heypixelmod.obsoverlay.modules.impl.misc.AutoTools;
 import com.heypixel.heypixelmod.obsoverlay.modules.impl.misc.ChestStealer;
@@ -140,7 +141,8 @@ public class ModuleManager {
            new Criticals(),
             new DoubleHit(),
             new AutoRod(),
-            new NoRotateSet()
+            new NoRotateSet(),
+            new AntiCheatDetect()
       );
    }
 
