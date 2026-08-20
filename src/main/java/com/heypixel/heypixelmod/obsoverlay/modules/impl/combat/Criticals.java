@@ -1,5 +1,6 @@
 package com.heypixel.heypixelmod.obsoverlay.modules.impl.combat;
 
+import com.heypixel.heypixelmod.obsoverlay.Naven;
 import com.heypixel.heypixelmod.obsoverlay.events.api.EventTarget;
 import com.heypixel.heypixelmod.obsoverlay.events.impl.EventAttack;
 import com.heypixel.heypixelmod.obsoverlay.modules.Category;
@@ -24,7 +25,10 @@ public class Criticals extends Module {
       if (!(target instanceof LivingEntity)) return;
       if (!target.isAlive()) return;
       if (mc.player == null || mc.getConnection() == null) return;
-      if (mc.player.onGround()) return;
+      if (mc.player.onGround()) {
+         Module doubleHit = Naven.getInstance().getModuleManager().getModule(DoubleHit.class);
+         if (doubleHit == null || !doubleHit.isEnabled()) return;
+      }
 
       mc.getConnection().send(
          new ServerboundMovePlayerPacket.PosRot(
