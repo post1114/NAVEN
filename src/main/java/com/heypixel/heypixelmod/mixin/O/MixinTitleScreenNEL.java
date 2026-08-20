@@ -2,7 +2,6 @@ package com.heypixel.heypixelmod.mixin.O;
 
 import com.heypixel.heypixelmod.obsoverlay.nel.NelManager;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -17,7 +16,7 @@ public class MixinTitleScreenNEL {
       at = {@At("TAIL")}
    )
    private void onInit(CallbackInfo ci) {
-      Screen screen = (Screen) (Object) this;
+      TitleScreen screen = (TitleScreen) (Object) this;
       int centerX = screen.width / 2;
       int rightX = centerX + 105;
 

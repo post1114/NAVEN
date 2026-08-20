@@ -14,8 +14,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public class NelManager {
    public static final String SERVER_ID_BUJIDAO = "4661334467366178884";
-   public static final ResourceLocation CHANNEL_HEYPIXEL = new ResourceLocation("heypixel", "main");
-   public static final ResourceLocation CHANNEL_NEL = new ResourceLocation("naven", "nel");
+   public static final ResourceLocation CHANNEL_HEYPIXEL = ResourceLocation.fromNamespaceAndPath("heypixel", "main");
+   public static final ResourceLocation CHANNEL_NEL = ResourceLocation.fromNamespaceAndPath("naven", "nel");
 
    private static NelManager instance;
    private final Minecraft mc = Minecraft.getInstance();

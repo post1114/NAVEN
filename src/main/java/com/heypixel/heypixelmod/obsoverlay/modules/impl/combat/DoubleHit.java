@@ -93,8 +93,8 @@ public class DoubleHit extends Module {
          mc.player.setXRot(RotationManager.rotations.y);
       }
 
-      mc.gameMode.attack(mc.player, target);
       mc.player.swing(InteractionHand.MAIN_HAND);
+      mc.gameMode.attack(mc.player, target);
 
       mc.player.setYRot(oldYaw);
       mc.player.setXRot(oldPitch);
