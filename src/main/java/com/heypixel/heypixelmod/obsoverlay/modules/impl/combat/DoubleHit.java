@@ -24,6 +24,7 @@ public class DoubleHit extends Module {
    public static boolean suppressCrit = false;
    private final Map<Integer, Entity> scheduledAttacks = new LinkedHashMap<>();
    private boolean shouldJump = false;
+   private int jumpDelay = 0;
    private int attackIndex = 0;
 
    @EventTarget
@@ -35,6 +36,7 @@ public class DoubleHit extends Module {
       if (!mc.player.onGround()) return;
 
       this.shouldJump = true;
+      this.jumpDelay = 1;
       this.attackIndex = 0;
       this.scheduledAttacks.put(5, target);
       this.scheduledAttacks.put(6, target);
@@ -46,8 +48,12 @@ public class DoubleHit extends Module {
       if (mc.player == null || mc.level == null || mc.gameMode == null) return;
 
       if (this.shouldJump) {
-         this.shouldJump = false;
-         mc.player.jumpFromGround();
+         if (this.jumpDelay > 0) {
+            this.jumpDelay--;
+         } else {
+            this.shouldJump = false;
+            mc.player.jumpFromGround();
+         }
       }
 
       if (this.scheduledAttacks.isEmpty()) return;
@@ -102,6 +108,7 @@ public class DoubleHit extends Module {
    public void onDisable() {
       this.scheduledAttacks.clear();
       this.shouldJump = false;
+      this.jumpDelay = 0;
       this.attackIndex = 0;
       suppressCrit = false;
    }
