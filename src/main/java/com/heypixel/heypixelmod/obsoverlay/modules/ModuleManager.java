@@ -25,6 +25,7 @@ import com.heypixel.heypixelmod.obsoverlay.modules.impl.misc.Helper;
 import com.heypixel.heypixelmod.obsoverlay.modules.impl.misc.InventoryCleaner;
 import com.heypixel.heypixelmod.obsoverlay.modules.impl.misc.ItemTracker;
 import com.heypixel.heypixelmod.obsoverlay.modules.impl.misc.KillSay;
+import com.heypixel.heypixelmod.obsoverlay.modules.impl.misc.NoRotateSet;
 import com.heypixel.heypixelmod.obsoverlay.modules.impl.misc.Spammer;
 import com.heypixel.heypixelmod.obsoverlay.modules.impl.misc.Teams;
 import com.heypixel.heypixelmod.obsoverlay.modules.impl.move.AutoMLG;
@@ -137,8 +138,9 @@ public class ModuleManager {
           new LongJump(),
           new TickBase(),
            new Criticals(),
-           new DoubleHit(),
-           new AutoRod()
+            new DoubleHit(),
+            new AutoRod(),
+            new NoRotateSet()
       );
    }
 
